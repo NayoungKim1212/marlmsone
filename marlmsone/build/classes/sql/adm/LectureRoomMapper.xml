@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.adm.dao.LectureRoomDao">
+
+	<!-- 강의실 목록 조회 -->
+	<select id="lectureRoomList" resultType="kr.happyjob.study.adm.model.LectureRoomVO">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lectureRoomList*/
+		select lecrm_id
+		      , lecrm_name
+		      , lecrm_size
+		      , lecrm_snum
+		      , lecrm_note
+		from tb_lec_room
+		<where>
+			<if test="(searchRoomName != null) and (!searchRoomName.equals(''))">
+		    	and lecrm_name Like CONCAT('%', #{searchRoomName}, '%')
+			</if>
+		</where> 
+		order by lecrm_name
+		limit #{startpos}, #{pagesize}
+	</select>
+	
+	<!-- 강의실 이름 중복 조회 -->
+	<select id="lectureRoomNameCheck" resultType="int">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lectureRoomNameCheck*/
+		select 	count(*)
+		from 	tb_lec_room
+		where 	lecrm_name = #{lecrm_name}
+		<if test="(lecrm_id !=null) and (!lecrm_id.equals(''))">
+			and lecrm_id != #{lecrm_id}	
+		</if>
+	</select>
+	
+	<!-- 강의실 총 개수 -->	
+	<select id="lectureRoomCnt" resultType="int">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lectureRoomCnt*/
+		select count(*)
+		from tb_lec_room
+		<where>
+			<if test="(searchRoomName != null) and (!searchRoomName.equals(''))">
+		    	and lecrm_name Like CONCAT('%', #{searchRoomName}, '%')
+			</if>
+		</where> 
+	</select>
+	
+	<!-- 강의실 상세 조회 - 수정용 -->
+	<select id="lectureRoomDtl" resultType="kr.happyjob.study.adm.model.LectureRoomVO">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lectureRoomDtl*/
+		select lecrm_id
+		      , lecrm_name
+		      , lecrm_size
+		      , lecrm_snum
+		      , lecrm_note
+		from tb_lec_room
+		where lecrm_id = #{lecrm_id}
+	</select>
+	
+	<!-- 강의실 정보 삽입 -->	
+	<insert id="lectureRoomInsert">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lectureRoomInsert*/
+		insert into tb_lec_room(
+								lecrm_name
+								, lecrm_size
+								, lecrm_snum
+								, lecrm_note
+						)
+						 values(
+						 		#{lecrm_name}
+						 		, #{lecrm_size}
+						 		, #{lecrm_snum}
+						 		, #{lecrm_note}
+						)
+	</insert>
+	
+	<!-- 강의실 정보 수정 -->
+	<update id="lectureRoomUpdate">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lectureRoomUpdate*/
+		<if test="(lecrm_id!=null) and (!lecrm_id.equals(''))">
+			update tb_lec_room
+			set lecrm_name = #{lecrm_name}
+				, lecrm_size = #{lecrm_size}
+				, lecrm_snum = #{lecrm_snum}
+				, lecrm_note = #{lecrm_note}
+			where lecrm_id = #{lecrm_id}
+		</if>
+	</update>
+
+	<!-- 강의실 정보 삭제 -->
+	<delete id="lectureRoomDelete">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lectureRoomDelete*/
+		delete 
+		from tb_lec_room
+		where lecrm_id = #{lecrm_id}
+	</delete>
+	
+	<!-- 강의실 장비 삭제 (강의실 삭제 시) -->
+	<delete id="equDelete">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equDelete*/
+		delete 
+		from tb_equ
+		<where>
+			<if test="(equ_id!=null) and (!equ_id.equals(''))">
+				and equ_id = #{equ_id}
+			</if>
+			<if test="(lecrm_id!=null) and (!lecrm_id.equals(''))">
+				and lecrm_id = #{lecrm_id}
+			</if>
+		</where>
+	</delete>
+
+	<!-- 강의실 장비 삭제 (강의실 삭제 시) -->
+	<delete id="oneEquDelete">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equDelete*/
+		delete 
+		from tb_equ
+		where equ_id = #{equ_id}
+	</delete>
+	
+	<!-- 강의의 강의실 정보 null 로 수정 (강의실 삭제시) -->
+	<update id="lectureNullUpdate">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lectureNullUpdate*/
+			update tb_lec_info
+			set lecrm_id = null
+			where lecrm_id = #{lecrm_id}
+	</update>
+	
+	<!-- 강의실 장비 조회 -->
+	<select id="equList" resultType="kr.happyjob.study.adm.model.LectureRoomVO">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equList*/
+		select r.lecrm_id
+				, r.lecrm_name
+				, e.equ_id
+				, e.equ_name
+				, e.equ_num
+				, e.equ_note
+		  from tb_lec_room r join tb_equ e
+		    on r.lecrm_id = e.lecrm_id
+		<where>
+			<if test="(lecrm_id!=null) and (!lecrm_id.equals(''))">
+				and e.lecrm_id = #{lecrm_id}
+			</if>
+		</where>
+		order by e.equ_name
+		limit #{startpos}, #{pagesize}
+	</select>
+	
+	<!-- 강의실 장비 개수 -->
+	<select id="equCnt" resultType="int">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equCnt*/
+		select 	count(*)
+	  	from 	tb_lec_room r join tb_equ e
+	    on r.lecrm_id = e.lecrm_id
+		<where>
+			<if test="(lecrm_id!=null) and (!lecrm_id.equals(''))">
+				and r.lecrm_id = #{lecrm_id}
+			</if>
+		</where> 
+	</select>
+	
+	<!-- 강의실 장비 등록 -->
+	<insert id="equInsert">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equInsert*/
+		insert into tb_equ (
+							lecrm_id
+							, equ_name
+							, equ_num
+							, equ_note
+							)
+					values (
+							#{lecrm_id}
+							, #{equ_name}
+							, #{equ_num}
+							, #{equ_note}
+							)
+	</insert>	
+		
+	<!-- 강의실 장비 수정 -->
+	<update id="equUpdate">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equUpdate*/
+		<if test="(equ_id!=null) and (!equ_id.equals(''))">
+			update tb_equ
+			set equ_name = #{equ_name}
+				, equ_num = #{equ_num}
+				, equ_note = #{equ_note}
+				, lecrm_id = #{lecrm_id}
+			where equ_id = #{equ_id}
+		</if>
+	</update>
+	
+	<!-- 강의실 장비 상세 -->
+	<select id="equDtl" resultType="kr.happyjob.study.adm.model.LectureRoomVO">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equDtl*/
+		select e.equ_id
+				, r.lecrm_id
+				, r.lecrm_name
+				, e.equ_name
+				, e.equ_num
+				, e.equ_note
+		from tb_equ e
+		join tb_lec_room r on e.lecrm_id = r.lecrm_id 
+		where e.equ_id = #{equ_id}
+	</select>
+	
+	<!-- 장비 관리 - 강의실 selectbox -->
+	<select id="lecRoomList" resultType="kr.happyjob.study.adm.model.LectureRoomVO">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.lecRoomList*/
+		select lecrm_id
+				, lecrm_name
+		from tb_lec_room
+		order by 2
+	</select>
+	
+	<!-- 장비 관리 - 강의실 수 -->
+	<select id="roomCnt" resultType="int">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.roomCnt*/
+		select count(*)
+		from tb_lec_room
+	</select>
+	
+	<!-- 장비 관리 리스트 조회 -->
+	<select id="equManagementList" resultType="kr.happyjob.study.adm.model.LectureRoomVO">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equManagementList*/
+		select r.lecrm_name
+				, e.equ_id
+				, e.equ_name
+				, e.equ_num
+				, e.equ_note
+		  from tb_lec_room r join tb_equ e
+		    on r.lecrm_id = e.lecrm_id
+		<where>
+			<if test="(searchOption.equals('room')) and (searchName!=null) and (!searchName.equals(''))">
+				and r.lecrm_name Like CONCAT('%', #{searchName}, '%')
+			</if>
+			<if test="(searchOption.equals('equ')) and (searchName!=null) and (!searchName.equals(''))">
+				and e.equ_name Like CONCAT('%', #{searchName}, '%')
+			</if>
+		</where>
+		order by r.lecrm_name
+		limit #{startpos}, #{pagesize}
+	</select>
+	
+	 <!-- 장비 관리 리스트 수 -->
+	<select id="equManagementCnt" resultType="int">
+	/*kr.happyjob.study.adm.dao.LectureRoomDao.equManagementCnt*/
+		select count(*)
+		  from tb_lec_room r join tb_equ e
+		    on r.lecrm_id = e.lecrm_id
+		<where>
+			<if test="(searchOption.equals('name')) and (searchName!=null) and (!searchName.equals(''))">
+				and r.lecrm_name Like CONCAT('%', #{searchName}, '%')
+			</if>
+			<if test="(searchOption.equals('euq')) and (searchName!=null) and (!searchName.equals(''))">
+				and e.equ_name Like CONCAT('%', #{searchName}, '%')
+			</if>
+		</where>
+	</select>
+	
+</mapper>

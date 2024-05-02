@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace: 연결인터페이스 주소 (필수)-->
+<mapper namespace="kr.happyjob.study.qna.dao.CommentDao">
+	<!-- 전체조회 -->
+	<select id="commentList" resultType="kr.happyjob.study.qna.model.CommentVo">
+		SELECT 
+		    rv_id
+		    ,qna_id
+			,loginID
+			,rv_con
+			,DATE_FORMAT(regdate, '%Y-%m-%d') as regdate
+		FROM tb_qna_rv 
+		WHERE qna_id=#{qna_id}
+       order by regdate desc	
+	</select>
+	
+	<!-- 게시물 수 조회 -->
+	<select id="listcnt" resultType="int">
+		select count(*) 
+		from tb_qna qa
+		     inner join tb_userinfo ui on qa.loginID = ui.loginID
+		<where>
+			<if test="(searchtitle != null) and (!searchtitle.equals(''))">
+				 and qa.qna_title Like CONCAT('%', #{searchtitle}, '%')
+			</if>
+		</where> 
+	</select>
+	
+	<!-- 글등록 -->
+	<insert id="commentSave" >
+		insert into  tb_qna_rv (
+							qna_id
+							,loginID
+							,rv_con
+							,regdate
+					)values (
+						#{qna_id}
+						,#{loginID}
+						,#{rv_con}
+						,now()
+					)
+	</insert>
+	
+	<!--기존 내용 가져오기 -->
+	<select id="commenOldView" resultType="kr.happyjob.study.qna.model.CommentVo">
+		SELECT 
+			*
+		FROM tb_qna_rv
+		WHERE rv_id=#{rv_id};
+	</select>
+	
+	<!-- 수정 -->
+	<update id="commentModify" >
+		UPDATE tb_qna_rv 
+		SET 
+			rv_con=#{rv_con}
+			,regdate=NOW()
+		WHERE rv_id=#{rv_id}	
+	</update>
+	
+	<!--삭제	-->
+	<delete id ="commentDelete">
+		DELETE 
+		FROM tb_qna_rv
+		WHERE rv_id=#{rv_id}
+	</delete> 
+
+
+</mapper>

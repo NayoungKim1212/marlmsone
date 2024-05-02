@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.tut.dao.CheckGradesDao">
+
+
+		<!-- 시험 리스트   -->
+	<select id="checkgradeList" resultType ="kr.happyjob.study.tut.model.CheckGradesModel">
+	    SELECT
+			     li.lec_id,
+			     li.lec_name,
+			     tm.test_name,
+			        CASE 
+				            WHEN <![CDATA[start_date < NOW() AND end_date > NOW() THEN '강의중'
+				            WHEN start_date > NOW() THEN '강의 시작전'
+				            WHEN end_date < NOW() THEN '강의 종료']]>
+				            ELSE '기타'
+			        END AS lecStatus,
+	       			 li.pre_pnum,
+	        IFNULL(tl.cnt, 0) AS cnt,
+	        (li.pre_pnum - IFNULL(tl.cnt, 0)) AS noTest,
+	        IFNULL(li.lec_type_id, 0) AS lec_type_id,
+	        IFNULL(li.test_id, 0) AS test_id
+	    FROM  tb_lec_info li
+	    INNER JOIN tb_testmaster tm ON li.test_id = tm.test_id
+	    LEFT OUTER JOIN (
+							    SELECT lec_id, COUNT(*) AS cnt
+							    FROM tb_test_user
+							    GROUP BY lec_id
+							  	) tl ON tl.lec_id = li.lec_id
+							  	
+	    <where>
+	     tutor_id = #{tutor_id}
+			<if test="searchInfo != null and searchInfo != ''">
+				<choose>
+					<when test="searchKey eq 'lec_name'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+					</when>
+					<when test="searchKey eq 'test_name'.toString()">
+						and tm.test_name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<when test="searchKey eq 'all'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+						or tm.test_name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where>			  
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+	
+	<!-- 시험 목록 카운트 조회  -->
+	<select id ="totalGradeCnt" resultType ="int">
+		SELECT count(*)
+		FROM  tb_lec_info li
+		INNER JOIN tb_testmaster tm on li.test_id = tm.test_id
+		LEFT OUTER JOIN (
+								SELECT lec_id
+								,count(*) as cnt
+								FROM tb_test_user
+								GROUP BY lec_id
+								) tl on tl.lec_id = li.lec_id
+		<where>
+		tutor_id = #{tutor_id}
+			<if test="searchInfo != null and searchInfo != ''">
+				<choose>
+					<when test="searchKey eq 'lec_name'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+					</when>
+					<when test="searchKey eq 'test_name'.toString()">
+						and tm.test_name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<when test="searchKey eq 'all'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+						or tm.test_name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where>		
+	</select>
+	
+	
+	<!-- 강의명 리스트 -->
+	<select id="lecList"  resultType ="kr.happyjob.study.tut.model.CheckGradesModel">
+	SELECT
+			 lec_name 
+ 	FROM tb_lec_info
+	</select>
+	
+	<!--시험명 리스트 --> 
+	<select id="testNameList" resultType ="kr.happyjob.study.tut.model.CheckGradesModel">
+	SELECT 
+			test_name 
+	FROM tb_testmaster tm 
+	INNER JOIN tb_lec_info li on tm.test_id = li.test_id
+	</select>
+	
+	<!-- 강의별 응시자 목록 -->
+	<select id="checkStdList" resultType="kr.happyjob.study.tut.model.CheckGradesModel">
+			SELECT 
+			    t.loginID,
+			    t.name,
+			    t.pass,
+			    t.test_score,
+			    t.test_yn
+			FROM (
+			    SELECT 
+			        ui.loginID,
+			        ui.name,
+			        CASE 
+			            WHEN tu.pass = 'p' THEN '통과'
+			            WHEN tu.pass = 'F' THEN '과락'
+			            ELSE '기타'
+			        END AS pass,
+			        tu.test_score,
+			        CASE 
+			            WHEN li.test_yn = 'Y' THEN '응시'
+			            WHEN li.test_yn = 'N' THEN '미응시'
+			            ELSE '기타'
+			        END AS test_yn
+			    FROM 
+			        tb_userinfo AS ui
+			    INNER JOIN  
+			        tb_lecstd_info li ON ui.loginID = li.std_id
+			    INNER JOIN  
+			        tb_test_user tu ON ui.loginID = tu.std_id
+			    WHERE 
+			        tu.lec_id = #{lec_id}
+			) AS t
+			GROUP BY 
+			    t.loginID
+			LIMIT #{startpos}, #{pagesize}
+		</select>
+	
+	<!--강의별 응시자 카운트  -->
+	<select id="checkStdCount" resultType="int">
+	SELECT 
+    	COUNT(*) AS std_total
+	FROM tb_test_user tu
+	WHERE tu.lec_id =#{lec_id}
+	</select>	
+</mapper>

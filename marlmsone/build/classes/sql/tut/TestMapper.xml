@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.test.dao.TestDao">
+
+	<!-- 시험분류명 조회코드  -->
+	<select id="lectureListData" resultType="kr.happyjob.study.test.model.TestModel">
+		SELECT 
+					lec_type_id
+					, lec_type_name
+		FROM 	tb_lec_type
+		ORDER BY lec_type_name
+	</select>	
+
+
+	<!--목록 조회코드 -->
+	<select id="getListData" resultType="kr.happyjob.study.test.model.TestModel">
+		SELECT
+					tq.que_id,
+					lt.lec_type_name,
+					tq.test_que,
+					tq.que_ans,
+					tq.que_ex1,
+					tq.que_ex2,
+					tq.que_ex3,
+					tq.que_ex4
+		FROM  	tb_test_que tq
+				inner join tb_lec_type lt on tq.lec_type_id = lt.lec_type_id
+		WHERE tq.use_yn = ifnull(#{use_yn},'Y')
+				<if test="(lecList != null) and (!lecList.equals(''))">
+					and lt.lec_type_id = #{lecList}
+				</if>
+		LIMIT #{startpos}, #{pagesize}
+	</select>
+
+	<!-- 전체 목록 개수 조회코드 -->
+	<select id="testListCnt" resultType="int">
+		SELECT COUNT(*)
+		FROM  tb_test_que tq
+		INNER JOIN 
+			tb_lec_type lt ON tq.lec_type_id = lt.lec_type_id
+		WHERE tq.use_yn = ifnull(#{use_yn},'Y')
+				<if test="(lecList != null) and (!lecList.equals(''))">
+					and lt.lec_type_id = #{lecList}
+				</if>
+	</select>
+	
+
+	<!-- 저장 등록 코드 -->
+	<insert id="insertTestData">
+		INSERT INTO tb_test_que 
+		(lec_type_id, test_que,que_ans, que_ex1, que_ex2, que_ex3, que_ex4, use_yn)
+		VALUES(
+				#{lec_type_id},
+				#{test_que},
+				#{que_ans},
+				#{que_ex1},
+				#{que_ex2},
+				#{que_ex3},
+				#{que_ex4},
+				#{use_yn}
+		);
+	</insert>
+
+	<!-- 수정 조회 코드 -->
+	<select id="testModifyList" resultType="kr.happyjob.study.test.model.TestModel">
+		SELECT
+					tq.que_id,
+					lt.lec_type_id,
+					tq.test_que,
+					tq.que_ans,
+					tq.que_ex1,
+					tq.que_ex2,
+					tq.que_ex3,
+					tq.que_ex4,
+					tq.use_yn
+		FROM 	tb_test_que tq
+				inner join tb_lec_type lt on tq.lec_type_id = lt.lec_type_id
+		WHERE tq.que_id = #{que_id}
+	</select>
+
+
+	<!-- 수정 코드 -->
+	<update id="testModify">
+		UPDATE tb_test_que
+		SET 
+			lec_type_id = #{lec_type_id},
+			test_que = #{test_que},
+			que_ans = #{que_ans},
+			que_ex1 = #{que_ex1},
+			que_ex2 = #{que_ex2},
+			que_ex3 = #{que_ex3},
+			que_ex4 = #{que_ex4},
+			use_yn = #{use_yn}
+		WHERE que_id = #{que_id}
+	</update>
+
+	<!-- 문제 비활성화 등록 코드 -->
+	<update id="testDeactivate">
+		UPDATE tb_test_que
+    	SET use_yn = 
+	        CASE 
+	            WHEN use_yn = 'Y' THEN 'N'
+	            WHEN use_yn = 'N' THEN 'Y'
+	            ELSE use_yn
+	        END
+		 WHERE que_id = #{que_id}
+	</update>
+
+
+</mapper>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.tut.dao.TutorLearnMaterialsDao">
+
+	<!-- 학습 자료 리스트 -->		
+	<select id="getTutorLearnMatList" parameterType="HashMap" resultType="kr.happyjob.study.tut.model.TutorLearningMaterials">
+		/*kr.happyjob.study.tut.dao.TutorLearnMaterialsDao.getTutorLearnMatList*/
+		SELECT
+			ld.learn_data_id AS learn_data_id,
+			li.lec_id AS lectureId,
+		    ld.learn_tit AS learnTitle,
+		    ld.learn_con AS learnContent,
+		    ld.w_date AS writeDate,
+		    ld.learn_fname AS materials_fname,
+		    ld.learn_url AS materials_url
+		FROM
+			tb_learn_data ld
+		INNER JOIN tb_lec_info li ON ld.lec_id = li.lec_id
+		WHERE tutor_id = #{tutorId} and li.lec_id = #{lectureValue}
+		LIMIT #{pageIndex}, #{pageSize};
+	</select>
+	
+	<!-- 학습 자료 총 갯수 조회 -->
+	<select id="learnMatTotalCount" resultType="int">
+		SELECT
+    		count(*) AS count
+		FROM
+			tb_learn_data ld
+		INNER JOIN tb_lec_info li ON ld.lec_id = li.lec_id
+		WHERE tutor_id = #{tutorId} and li.lec_id = #{lectureValue};
+	</select>
+	
+	<!-- 학습 자료 디테일 -->
+	<select id="getDetailLearnMat" parameterType="Integer" resultType="kr.happyjob.study.tut.model.TutorLearningMaterials">
+		/*kr.happyjob.study.tut.dao.TutorLearnMaterialsDao.getDetailLearnMat*/
+		SELECT
+			ld.learn_data_id AS learn_data_id,
+			li.lec_id AS lectureId,
+		    ld.learn_tit AS learnTitle,
+		    ld.learn_con AS learnContent,
+		    ld.w_date AS writeDate,
+		    ld.learn_fname AS materials_fname,
+		    ld.learn_url AS materials_url
+		FROM
+			tb_learn_data ld
+		INNER JOIN tb_lec_info li ON ld.lec_id = li.lec_id
+		WHERE learn_data_id = #{param};
+	</select>
+	
+	<!-- 강의 리스트  -->
+	<select id="getLectureList" resultType="kr.happyjob.study.tut.model.TutorLectureDto">
+	/*kr.happyjob.study.tut.dao.TutorLearnMaterialsDao.getLectureList*/
+	
+	SELECT 
+		li.lec_id,
+		li.lec_name,
+		li.tutor_id,
+		ui.name AS tutor_name,
+		li.lecrm_id,
+		lr.lecrm_name,
+		li.start_date,
+		li.end_date,
+		li.pre_pnum,
+		li.max_pnum
+	FROM
+		tb_lec_info li
+	INNER JOIN tb_userinfo ui ON li.tutor_id = ui.loginID
+	INNER JOIN tb_lec_room lr ON li.lecrm_id = lr.lecrm_id
+	WHERE
+		tutor_id = #{tutorId}
+	ORDER BY li.lec_id
+	
+	</select>
+	
+	<!-- 학습 자료 등록 -->
+	<insert id="insertLearnMaterials" parameterType="kr.happyjob.study.tut.model.TutorLearningMaterials" 
+	useGeneratedKeys="true" keyProperty="learn_data_id">
+	/*kr.happyjob.study.tut.dao.TutorLearnMaterialsDao.insertLearnMaterials*/
+	
+	INSERT INTO
+		tb_learn_data
+	values(
+		0,
+		#{lectureId},
+		#{learnTitle},
+		#{learnContent},
+		now(),
+		#{materials_fname},
+		#{materials_url},
+		#{materials_fsize}
+	)
+	
+	</insert>
+	
+	<!-- 학습 자료 수정 -->
+	<update id="updateLearnMat" parameterType="HashMap" >
+	/*kr.happyjob.study.tut.dao.TutorLearnMaterialsDao.updateLearnMat*/
+	
+	UPDATE tb_learn_data
+	SET	
+		learn_tit = #{updateLearnTitle},
+    	learn_con = #{updateLearnContent},
+    	w_date = now()
+    	<if test="updateFileStatus == true">
+    		,	
+	    	learn_fname = #{saveUpdateFileName},
+	    	learn_url = #{updateFilePath},
+	    	learn_fsize = #{updateProjectFileSize}
+    	</if>
+	WHERE
+		learn_data_id = #{learnMatId};
+	
+	</update >
+	
+	<!-- 학습 자료 삭제 -->
+	<delete  id="deleteLearnMat" parameterType="Integer">
+	/*kr.happyjob.study.tut.dao.TutorLearnMaterialsDao.deleteLearnMat*/
+	
+		DELETE FROM tb_learn_data
+		WHERE learn_data_id = #{learnMatId};
+	</delete>
+	
+</mapper>

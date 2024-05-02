@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.surveyMgt.dao.SurveyMgtDao">
+
+	<!-- 목록 조회 -->
+	<select id="selectSrvyMgtList" resultType="kr.happyjob.study.surveyMgt.model.SurveyMgtVo">
+		/* kr.happyjob.study.notice.dao.SurveyMgtDao.selectSrvyMgtList */		
+		SELECT
+				st.lec_id,
+				st.std_id,
+				st.srvy_yn,
+				st.apv_yn,
+				le.lec_name,
+				le.start_date,
+				le.end_date,
+				le.process_day * 0.8 as progress_rate,
+				tutor_info.loginID AS tutor_loginID,
+				tutor_info.name AS tutor_name,
+				student_info.name AS std_name
+		FROM tb_lecstd_info AS st
+		INNER JOIN tb_lec_info AS le
+				ON st.lec_id = le.lec_id
+		INNER JOIN tb_userinfo AS tutor_info
+				ON le.tutor_id = tutor_info.loginID
+		INNER JOIN tb_userinfo AS student_info
+				ON st.std_id = student_info.loginID
+		GROUP BY st.lec_id ORDER BY le.end_date DESC
+	</select>
+	
+	<!-- 강사 페이지 목록 조회 -->
+	<select id="selectSrvyMgtTutorList" resultType="kr.happyjob.study.surveyMgt.model.SurveyMgtVo">
+		/* kr.happyjob.study.notice.dao.SurveyMgtDao.selectSrvyMgtTutorList */		
+		SELECT
+				st.lec_id,
+				st.std_id,
+				st.srvy_yn,
+				st.apv_yn,
+				le.lec_name,
+				le.start_date,
+				le.end_date,
+				le.process_day * 0.8 as progress_rate,
+				tutor_info.loginID AS tutor_loginID,
+				tutor_info.name AS tutor_name,
+				student_info.name AS std_name
+		FROM tb_lecstd_info AS st
+		INNER JOIN tb_lec_info AS le
+				ON st.lec_id = le.lec_id
+		INNER JOIN tb_userinfo AS tutor_info
+				ON le.tutor_id = tutor_info.loginID
+		INNER JOIN tb_userinfo AS student_info
+				ON st.std_id = student_info.loginID
+		WHERE tutor_info.loginID = #{loginId}
+		GROUP BY st.lec_id ORDER BY le.end_date DESC
+	
+	</select>
+	
+	
+	<!-- 전체 개수 조회 -->
+	<select id="srvyMgtCnt" resultType="int">
+		/* kr.happyjob.study.notice.dao.SurveyMgtDao.srvyMgtCnt */
+        SELECT COUNT(DISTINCT(sInfo.lec_id)) AS totalCnt
+		FROM tb_lecstd_info sInfo
+	</select>
+
+	<!-- 강사 전체 개수 조회 -->
+	<select id="srvyMgtTutorCnt" resultType="int">
+		/* kr.happyjob.study.notice.dao.SurveyMgtDao.srvyMgtTutorCnt */
+		SELECT COUNT(DISTINCT st.lec_id) AS totalCnt
+		FROM tb_lecstd_info st
+		INNER JOIN tb_lec_info le
+        ON le.lec_id = st.lec_id
+        WHERE le.tutor_id = 'bbb123'
+	</select>
+	
+	<!-- 상세 조회 -->
+	<select id="detailSrvyList" resultType="kr.happyjob.study.surveyMgt.model.SurveyMgtVo">
+		/* kr.happyjob.study.notice.dao.SurveyMgtDao.detailSrvyList */
+			SELECT
+					AVG(CASE WHEN st.srvy_yn = 'y' THEN 1 ELSE 0 END) * 100 AS survey_percentage,
+					st.lec_id,
+					le.lec_name,		-- 강의명 
+					le.start_date,
+					le.end_date,
+					le.process_day * 0.8 as progress_rate,	-- 진도율
+					tutor_info.name AS tutor_name			-- 강사 이름
+			FROM tb_lecstd_info AS st
+			INNER JOIN tb_lec_info AS le
+					ON st.lec_id = le.lec_id
+			INNER JOIN tb_userinfo AS tutor_info
+					ON le.tutor_id = tutor_info.loginID
+			INNER JOIN tb_userinfo AS student_info
+					ON st.std_id = student_info.loginID
+			WHERE le.lec_id = #{lec_id}
+			GROUP BY st.lec_id ORDER BY le.end_date DESC;
+	</select>
+	
+	<select id="detailSrvyTutorNmList" resultType="kr.happyjob.study.surveyMgt.model.SurveyMgtVo">
+		/* kr.happyjob.study.notice.dao.SurveyMgtDao.detailStvyTutorNmList */
+		SELECT
+				AVG(CASE WHEN st.srvy_yn = 'y' THEN 1 ELSE 0 END) * 100 AS survey_percentage,
+				st.lec_id,
+				le.lec_name,		-- 강의명
+				le.start_date,
+				le.end_date,
+				le.process_day * 0.8 as progress_rate,	-- 진도율
+				tutor_info.name AS tutor_name			-- 강사 이름
+		FROM tb_lecstd_info AS st
+		INNER JOIN tb_lec_info AS le
+				ON st.lec_id = le.lec_id
+		INNER JOIN tb_userinfo AS tutor_info
+				ON le.tutor_id = tutor_info.loginID
+		INNER JOIN tb_userinfo AS student_info
+				ON st.std_id = student_info.loginID
+		WHERE tutor_info.name = #{tutor_name}
+		GROUP BY st.lec_id
+		ORDER BY le.end_date DESC
+		LIMIT #{startpos}, #{pagesize}
+	
+	</select>
+	
+	<select id="detailSrvyCnt" resultType="int">
+		/* kr.happyjob.study.notice.dao.SurveyMgtDao.detailSrvyCnt */
+		SELECT COUNT(DISTINCT lec_id) AS detailTotalCnt,
+		lec_id
+		FROM tb_lecstd_info
+		WHERE lec_id = #{lec_id}
+	</select>
+	
+	<select id="detailTutorNameSrvyCnt" resultType="int">
+		/* kr.happyjob.study.notice.dao.SurveyMgtDao.detailTutorNameSrvyCnt */
+		SELECT COUNT(DISTINCT le.lec_id) AS detailNmTotalCnt,
+		st.lec_id
+		FROM tb_lecstd_info st
+		INNER JOIN tb_lec_info AS le
+				ON st.lec_id = le.lec_id
+		INNER JOIN tb_userinfo AS tutor_info
+				ON le.tutor_id = tutor_info.loginID
+		WHERE tutor_info.name = #{tutor_name}
+	</select>
+	
+	<!-- 설문조사 결과 조회 (0~10번까지) -->
+	<select id="srvyResult" resultType="kr.happyjob.study.surveyMgt.model.SurveyMgtVo">
+		SELECT 
+		    st.lec_id
+		    , sq.que
+		    , st.que_num
+		    , le.lec_name
+		    , SUM(CASE WHEN st.review_num = 1 THEN 1 ELSE 0 END) AS review_num_1
+		    , SUM(CASE WHEN st.review_num = 2 THEN 1 ELSE 0 END) AS review_num_2
+			, SUM(CASE WHEN st.review_num = 3 THEN 1 ELSE 0 END) AS review_num_3
+		    , SUM(CASE WHEN st.review_num = 4 THEN 1 ELSE 0 END) AS review_num_4
+		    , SUM(CASE WHEN st.review_num = 5 THEN 1 ELSE 0 END) AS review_num_5
+		FROM 
+		    tb_srvy_std st
+		INNER JOIN
+		    tb_lec_info le ON st.lec_id = le.lec_id
+		INNER JOIN
+			tb_srvy_que sq ON st.que_num = sq.que_num
+		WHERE
+		    st.lec_id = #{lec_id} AND st.que_num BETWEEN 0 AND 10
+		GROUP BY 
+		    st.lec_id
+		    , st.que_num
+	</select>
+	
+	<!-- 설문조사 결과 조회 (11번) -->
+	<select id="srvyResultLast" resultType="kr.happyjob.study.surveyMgt.model.SurveyMgtVo">
+		SELECT
+			st.lec_id
+			, sq.que
+			, st.que_num
+		    , st.review
+		    , le.lec_name
+		FROM
+			tb_srvy_std st
+		INNER JOIN
+			tb_lec_info le ON st.lec_id = le.lec_id
+		INNER JOIN
+			tb_srvy_que sq ON st.que_num = sq.que_num
+		WHERE
+			st.lec_id = #{lec_id}  AND st.que_num = 11
+	</select>
+</mapper>

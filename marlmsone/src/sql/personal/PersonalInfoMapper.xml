@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.personal.dao.PersonalServiceDao">
+	
+	<!-- 개인정보 조회  -->
+	<select id="getUserInfo" resultType="kr.happyjob.study.personal.model.PersonalVO">
+	/*kr.happyjob.study.personal.dao.PersonalServiceDao.getUserInfo*/
+		select loginId
+				, name
+				, zipcode
+				, addr
+				, addr_dtl
+				, tel
+				, mail
+				, resume_fname
+				, resume_url
+				, resume_fsize
+		from tb_userinfo		
+		where loginId = #{loginId}
+	</select>
+	
+	<!-- 비밀번호 조회  -->
+	<select id="nowPwd" resultType="String">
+	/*kr.happyjob.study.personal.dao.PersonalServiceDao.nowPwd*/
+		select password
+		from tb_userinfo		
+		where loginId = #{loginId}
+	</select>
+	
+	<!-- 개인정보 수정 - 파일O  -->
+	<update id="updateUserInfo">
+	/*kr.happyjob.study.personal.dao.PersonalServiceDao.updateUserInfo*/
+		update tb_userinfo
+		set		zipcode = #{zipcode} 
+				, addr = #{addr}
+				, addr_dtl = #{addr_dtl}
+				, tel = #{tel}
+				, mail = #{mail}
+				, resume_fname = #{fileinfo.file_nm}
+				, resume_url = #{fileinfo.file_loc}
+				, resume_fsize = #{fileinfo.file_size}
+		where loginId = #{loginId}
+	</update>
+	
+	<!-- 개인정보 수정 - 파일X  -->
+	<update id="updateUserInfoNoResume">
+	/*kr.happyjob.study.personal.dao.PersonalServiceDao.updateUserInfo*/
+		update tb_userinfo
+		set		zipcode = #{zipcode} 
+				, addr = #{addr}
+				, addr_dtl = #{addr_dtl}
+				, tel = #{tel}
+				, mail = #{mail}
+		where loginId = #{loginId}
+	</update>
+	
+	<!-- 개인정보 : 비밀번호 변경 -->
+	<update id="updatePwd">
+	/*kr.happyjob.study.personal.dao.PersonalServiceDao.updatePwd*/
+		update tb_userinfo
+		set		password = #{newPsd}
+		where loginId = #{loginId}
+	</update>
+	
+	<!-- 계정 미사용으로 변경 -->
+	<update id="personalQuit">
+	/*kr.happyjob.study.personal.dao.PersonalServiceDao.personalQuit*/
+		update tb_userinfo
+		set		use_yn = 'N'
+		where loginId = #{loginId}
+	</update>
+	
+	
+</mapper>

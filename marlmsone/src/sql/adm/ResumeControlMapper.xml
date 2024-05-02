@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.adm.dao.ResumeControlDao">
+
+	<select id="getAllLectureList" resultType="kr.happyjob.study.adm.model.AdmLectureDto">
+		
+		SELECT 
+			li.lec_id,
+    		li.tutor_id,
+    		ui.name AS tutor_name,
+    		li.lec_name,
+    		li.pre_pnum,
+    		li.start_date,
+    		li.end_date
+		FROM 
+			tb_lec_info li
+		INNER JOIN tb_userinfo ui ON li.tutor_id = ui.loginID
+		LIMIT #{pageIndex}, #{pageSize};
+		
+	</select>
+	
+	<select id="lectureListTotalCount" resultType="Integer">
+		
+		SELECT
+			count(*) AS count
+		FROM
+			tb_lec_info li
+			INNER JOIN tb_userinfo ui ON li.tutor_id = ui.loginID;
+		
+	</select>
+	
+	<select id="getStudentResumeList" resultType="kr.happyjob.study.adm.model.StudentResumeDto">
+		SELECT
+			li.lec_id AS lectureId,
+			li.std_id AS studentId,
+    		ui.name AS studentName,
+    		ui.tel AS studentTel,
+    		ui.mail AS studentMail,
+    		ui.resume_fname AS resumeFileName,
+    		ui.resume_url AS resumeUrl,
+    		ui.resume_fsize AS resumeFilesize
+		FROM
+			tb_lecstd_info li
+		INNER JOIN tb_userinfo ui ON li.std_id = ui.loginID
+		WHERE lec_id = #{lectureId};	
+		
+	</select>
+	
+	<select id="studentResumeTotalCount" resultType="Integer">
+		SELECT
+			count(*) AS count
+		FROM
+			tb_lecstd_info li
+		INNER JOIN tb_userinfo ui ON li.std_id = ui.loginID
+		WHERE lec_id = #{lectureId};	
+	
+	</select>
+	
+		<select id="getStudentResume" parameterType="HashMap" resultType="kr.happyjob.study.adm.model.StudentResumeDto">
+		SELECT
+			li.lec_id AS lectureId,
+			li.std_id AS studentId,
+    		ui.name AS studentName,
+    		ui.tel AS studentTel,
+    		ui.mail AS studentMail,
+    		ui.resume_fname AS resumeFileName,
+    		ui.resume_url AS resumeUrl,
+    		ui.resume_fsize AS resumeFilesize
+		FROM
+			tb_lecstd_info li
+		INNER JOIN tb_userinfo ui ON li.std_id = ui.loginID
+		WHERE lec_id = #{lectureId} and li.std_id = #{studentId};	
+		
+	</select>
+	
+</mapper>

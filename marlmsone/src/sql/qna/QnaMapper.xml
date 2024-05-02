@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace: 연결인터페이스 주소 (필수)-->
+<mapper namespace="kr.happyjob.study.qna.dao.QnaDao">
+
+
+	<!-- 전체조회 -->
+	<select id="qnaList" resultType="kr.happyjob.study.qna.model.QnaVo">
+		select 
+		     qa.qna_id
+			,qa.qna_title
+			,DATE_FORMAT(qa.regdate, '%Y-%m-%d') as regdate
+			,qa.hit
+			,qa.loginID 
+			,ui.user_type
+		from tb_qna qa  
+		     inner join tb_userinfo ui on qa.loginID = ui.loginID
+ 		<where>
+			<if test="(searchtitle != null) and (!searchtitle.equals(''))">
+				 and qa.qna_title Like CONCAT('%', #{searchtitle}, '%')
+			</if>
+		</where> 
+       order by qa.regdate desc
+       limit #{startpos}, #{pagesize}		
+		
+
+	
+	</select>
+	
+	<!-- 게시물 수 조회 -->
+	<select id="listcnt" resultType="int">
+		select count(*) 
+		from tb_qna qa
+		     inner join tb_userinfo ui on qa.loginID = ui.loginID
+		<where>
+			<if test="(searchtitle != null) and (!searchtitle.equals(''))">
+				 and qa.qna_title Like CONCAT('%', #{searchtitle}, '%')
+			</if>
+		</where> 
+	</select>
+	
+	<!-- 글등록 -->
+	<insert id="qnaSave" >
+		insert into tb_qna (
+							loginID
+							,qna_title
+							,qna_con
+							,regdate
+							,hit
+					)values (
+						#{loginID}
+						,#{qna_title}
+						,#{qna_con}
+						,now()
+						,0
+					)
+	</insert>
+	
+	<!--상세조회 -->
+	<select id="qnaView" resultType="kr.happyjob.study.qna.model.QnaVo">
+		SELECT 
+			qna_id
+			,qna_title
+			,qna_con
+			,DATE_FORMAT(regdate, '%Y-%m-%d') as regdate
+			,hit
+			,loginID 
+		FROM tb_qna
+		WHERE qna_id=#{qna_id};
+	</select>
+	
+	<!-- 조회수 증가 -->
+	<update id="hit">
+	    UPDATE tb_qna
+	    SET hit = hit+1
+	    WHERE qna_id=#{qna_id};
+	</update>
+	
+	<!-- 작성자와 로그인한 사람이 동일한지 (버튼유무) -->
+	<select id="check" resultType="int">
+		SELECT COUNT(*)
+		FROM tb_qna
+		WHERE qna_id=#{qna_id} AND loginID=#{loginID} 
+	</select>
+	
+	<!-- 수정 -->
+	<update id="qnaModify" >
+		UPDATE tb_qna 
+		SET qna_title=#{qna_title}
+		,qna_con=#{qna_con}
+		WHERE qna_id=#{qna_id}	
+	</update>
+	
+	<!--수정 시 기존 내용 가져오기  -->
+	<select id="qnaOldView" resultType="kr.happyjob.study.qna.model.QnaVo">
+		SELECT 
+			qna_id
+			,qna_title
+			,qna_con
+			,DATE_FORMAT(regdate, '%Y-%m-%d') as regdate
+			,hit
+			,loginID 
+		FROM tb_qna
+		WHERE qna_id=#{qna_id};
+	</select>
+	
+	
+	<!-- 삭제 -->
+	<delete id ="qnaDelete">
+		DELETE 
+		FROM tb_qna
+		WHERE qna_id=#{qna_id}
+	</delete>
+	
+</mapper>

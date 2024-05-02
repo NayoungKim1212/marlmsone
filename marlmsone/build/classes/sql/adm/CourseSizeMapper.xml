@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.adm.dao.CourseSizeDao">
+	<!--강의 리스트 조회 -->
+	<select id="lecList" resultType="kr.happyjob.study.adm.model.CourseSizeModel">
+        SELECT
+			   i.lec_id,
+			   i.lec_name,
+               u.name,
+               i.max_pnum,
+               i.pre_pnum,
+			   DATE_FORMAT(i.start_date, '%Y.%m.%d') as start_date,
+			   DATE_FORMAT(i.end_date,'%Y.%m.%d') as end_date,
+               (SELECT COUNT(*) FROM tb_test_user WHERE lec_id = i.lec_id AND test_score  <![CDATA[ <= ]]>  '60') as fail_cnt,
+               ROUND(((SELECT COUNT(*) FROM tb_test_user WHERE lec_id = i.lec_id AND test_score  <![CDATA[ <= ]]>  '60') / i.pre_pnum) * 100,1) as fail_rate,
+               SUM(t.test_score) as tot_score,
+               ROUND(avg(t.test_score),1) as avg_score,
+               MAX(t.test_score) as max_score,
+               MIN(t.test_score) as min_score
+		  FROM tb_lec_info i
+	INNER JOIN tb_userinfo u
+			ON i.tutor_id = u.loginID	 
+     LEFT JOIN tb_test_user t
+			ON i.lec_id = t.lec_id
+		  <where>
+		<if test="(from_date != null) and (!from_date.equals('')) and (to_date != null) and (!to_date.equals(''))">
+				AND i.start_date between #{from_date} and #{to_date}
+				 OR i.end_date between #{from_date} and #{to_date}
+			</if>
+			<if test="(searchKey != null) and (!searchKey.equals(''))">
+				<choose>
+					<when test="(searchKey != null) and (searchKey eq 'all'.toString())">
+						AND (
+							u.name LIKE CONCAT('%', #{searchWord }, '%') or
+							i.lec_name LIKE CONCAT('%', #{searchWord }, '%')
+							)
+					</when>
+					<when test="(searchKey != null) and (searchKey eq 'lec_name'.toString())">
+						AND i.lec_name LIKE CONCAT('%', #{searchWord }, '%')
+					</when>
+					<when test="(searchKey != null) and (searchKey eq 'tutor_name'.toString())">
+						AND u.name LIKE CONCAT('%', #{searchWord }, '%')
+					</when>
+				</choose>
+			</if>
+			</where>
+            GROUP BY i.lec_id
+            <if test="(pageIndex != null) and (!pageIndex.equals('')) and (pageSize != null) and (!pageSize.equals(''))">
+			LIMIT #{pageIndex}, #{pageSize}
+		</if>
+	</select>
+
+	<!-- 강의 수 조회 -->
+	<select id="lecListCount" resultType="int">
+		SELECT count(distinct(i.lec_id))
+		  FROM tb_lec_info i
+	INNER JOIN tb_userinfo u
+			ON i.tutor_id = u.loginID	 
+     LEFT JOIN tb_test_user t
+			ON i.lec_id = t.lec_id
+		  <where>
+		<if test="(from_date != null) and (!from_date.equals('')) and (to_date != null) and (!to_date.equals(''))">
+				AND i.start_date between #{from_date} and #{to_date}
+				 OR i.end_date between #{from_date} and #{to_date}
+			</if>
+			<if test="(searchKey != null) and (!searchKey.equals(''))">
+				<choose>
+					<when test="(searchKey != null) and (searchKey eq 'all'.toString())">
+						AND (
+							u.name LIKE CONCAT('%', #{searchWord }, '%') or
+							i.lec_name LIKE CONCAT('%', #{searchWord }, '%')
+							)
+					</when>
+					<when test="(searchKey != null) and (searchKey eq 'lec_name'.toString())">
+						AND i.lec_name LIKE CONCAT('%', #{searchWord }, '%')
+					</when>
+					<when test="(searchKey != null) and (searchKey eq 'tutor_name'.toString())">
+						AND u.name LIKE CONCAT('%', #{searchWord }, '%')
+					</when>
+				</choose>
+			</if>
+			</where>
+	</select>
+	
+	<select id="selectSizeInfo" resultType="kr.happyjob.study.adm.model.CourseSizeModel">
+	    SELECT
+			   i.lec_id,
+			   i.lec_name,
+               i.max_pnum,
+               i.pre_pnum,
+               (SELECT COUNT(*) FROM tb_test_user WHERE lec_id = i.lec_id AND test_score  <![CDATA[ <= ]]>  '60') as fail_cnt,
+               ROUND(((SELECT COUNT(*) FROM tb_test_user WHERE lec_id = i.lec_id AND test_score  <![CDATA[ <= ]]>  '60') / i.pre_pnum),1) as fail_rate
+		  FROM tb_lec_info i
+	INNER JOIN tb_userinfo u
+			ON i.tutor_id = u.loginID	 
+     LEFT JOIN tb_test_user t
+			ON i.lec_id = t.lec_id
+		 WHERE i.lec_id = #{lec_id}
+	  GROUP BY i.lec_id;		 	
+	</select>
+
+</mapper>

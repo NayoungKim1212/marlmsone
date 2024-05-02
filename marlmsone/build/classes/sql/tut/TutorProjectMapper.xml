@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.tut.dao.TutorProjectDao">
+	
+	
+	<select id="getTutorProjectList" parameterType="HashMap" resultType="kr.happyjob.study.tut.model.TutorProjectDto">
+	/*kr.happyjob.study.tut.dao.TutorProjectDao.getTutorProjectList*/
+	SELECT 
+		hwk_id AS projectId,
+	    lec_id AS lectureId,
+	    hwk_name AS projectTitle,
+	    hwk_con AS projectContent,
+	    start AS startDate,
+	    dead AS deadLineDate,
+	    hwk_fname,
+	    hwk_url,
+	    hwk_fsize
+	FROM
+		tb_hmk
+	WHERE 
+		lec_id = #{lectureId}
+	
+	</select>
+	
+	<select id="tutorProjectTotalCount" resultType="int">
+	/*kr.happyjob.study.tut.dao.TutorProjectDao.tutorProjectTotalCount*/
+		SELECT
+    		count(*) AS count
+		FROM
+			tb_hmk
+		WHERE lec_id = #{lectureId};
+	</select>
+	
+	<insert id="insertTutorProejct" parameterType="kr.happyjob.study.tut.model.TutorProjectDto"
+	useGeneratedKeys="true" keyProperty="hwk_id">
+	/*kr.happyjob.study.tut.dao.TutorProjectDao.insertTutorProejct*/
+	
+	INSERT INTO
+		tb_hmk
+	values(
+		0, 
+		#{lectureId},
+		#{projectTitle},
+		#{projectContent},
+		#{startDate},
+		#{deadLineDate},
+		#{hwk_fname},
+		#{hwk_url},
+		#{hwk_fsize}
+	)
+	
+	</insert>
+	
+	<select id="getDetailTutorProject" parameterType="Integer" resultType="kr.happyjob.study.tut.model.TutorProjectDto">
+	/*kr.happyjob.study.tut.dao.TutorProjectDao.getDetailTutorProject*/
+	
+		SELECT 
+			hwk_id AS projectId,
+	   		 lec_id AS lectureId,
+	    	hwk_name AS projectTitle,
+	   		 hwk_con AS projectContent,
+	    	start AS startDate,
+	   		dead AS deadLineDate,
+	    	hwk_fname,
+	    	hwk_url,
+	    	hwk_fsize
+		FROM
+			tb_hmk
+		WHERE 
+		hwk_id = #{param};
+	
+	</select>
+	
+	<update id="updateTutorProject" parameterType="HashMap">
+	/*kr.happyjob.study.tut.dao.TutorProjectDao.updateTutorProject*/
+	
+		UPDATE tb_hmk
+		SET
+			hwk_name = #{updateProjectTitle},
+			hwk_con = #{updateProjectContent},
+			start = #{updateProjectSubmitDate},
+			dead = #{updateProjectDeadLineDate}
+			<if test="updateFileStatus == true">
+			,
+			hwk_fname = #{saveUpdateFileName},
+			hwk_url = #{updateFilePath},
+			hwk_fsize = #{updateProjectFileSize}
+			</if>
+		WHERE
+			hwk_id = #{projectId};
+	
+	</update>
+
+	<delete id="deleteTutorProject" parameterType="Integer">
+	/*kr.happyjob.study.tut.dao.TutorProjectDao.deleteTutorProject*/
+	
+		DELETE FROM tb_hmk
+		WHERE hwk_id = #{projectId};
+	
+	</delete>
+	
+	<select id="getStudentProjectList" parameterType="Integer" resultType="kr.happyjob.study.tut.model.StudentProjectDto">
+	
+		SELECT 
+			hs.submit_id,
+    		hs.std_id,
+    		ui.name AS student_name,
+    		hs.hwk_id,
+    		hs.submit_con,
+    		hs.submit_fname,
+    		hs.submit_url,
+    		hs.submit_fsize,
+    		hs.submit_date
+		FROM
+			tb_hwk_submit hs
+		INNER JOIN tb_userinfo ui ON hs.std_id = ui.loginID
+		WHERE hwk_id = #{projectId};
+	
+	</select>
+	
+		<select id="getStudentProject"  resultType="kr.happyjob.study.tut.model.StudentProjectDto">
+	
+		SELECT 
+			hs.submit_id,
+    		hs.std_id,
+    		ui.name AS student_name,
+    		hs.hwk_id,
+    		hs.submit_con,
+    		hs.submit_fname,
+    		hs.submit_url,
+    		hs.submit_fsize,
+    		hs.submit_date
+		FROM
+			tb_hwk_submit hs
+		INNER JOIN tb_userinfo ui ON hs.std_id = ui.loginID
+		WHERE submit_id = #{submitId};
+	
+	</select>
+	
+</mapper>

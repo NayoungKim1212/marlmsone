@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.adv.dao.AdviceDao">
+
+	<!-- 강의 목록 조회 -->
+	<select id="lecList" resultType="kr.happyjob.study.adv.model.LecInfoVo">
+		/*kr.happyjob.study.adv.dao.AdviceDao.lecList*/
+		select  lec_id
+              , lec_name
+              , DATE_FORMAT(start_date, '%Y%m%d') as start_date
+              , DATE_FORMAT(end_date, '%Y%m%d') as end_date    
+		from  tb_lec_info
+		<where>
+			<if test="(tut_id != null) and (!tut_id.equals(''))">
+		    	and tutor_id = #{tut_id}
+			</if>		
+		</where>
+		ORDER BY lec_id DESC
+	</select><!-- end 강의 목록 조회 -->
+	
+	<!-- 강의 목록 총 갯수 조회 -->
+	<select id="lecListCnt" resultType="int">
+		/*kr.happyjob.study.adv.dao.AdviceDao.lecListCnt*/
+		select count(*)
+		from tb_lec_info
+		<where>
+		<if test="(tut_id != null) and (!tut_id.equals(''))">
+			and tutor_id = #{tut_id}
+		</if>		
+		</where>			      		      
+	</select><!-- end 강의 목록 총 갯수 조회 -->
+	
+	<!-- 상담 목록 조회 -->
+	<select id="advList" resultType="kr.happyjob.study.adv.model.AdviceVo">
+		/*kr.happyjob.study.adv.dao.AdviceDao.advList*/
+		select  ad.adv_id
+       		  , ad.lec_id
+       		  , li.lec_name as lec_name
+              , ad.std_id
+              , std.name as std_name
+              , ad.tut_id
+              , tut.name as tut_name
+              , ad.adv_place
+              , DATE_FORMAT(ad.adv_date, '%Y.%m.%d') as adv_date
+		from  tb_adv ad
+			  join tb_userinfo std on ad.std_id = std.loginID
+			  join tb_userinfo tut on ad.tut_id = tut.loginID			  
+			  join tb_lec_info li on ad.lec_id = li.lec_id
+		<where>
+			<if test="(tut_id != null) and (!tut_id.equals(''))">
+		    	and ad.tut_id = #{tut_id}
+			</if>		
+ 	    	<if test="(lec_id != null) and (!lec_id.equals(''))">
+		    	and ad.lec_id = #{lec_id}
+			</if>
+		</where>   
+		ORDER BY adv_id DESC
+		<if test="(startPos != null) and (!startPos.equals('')) and (pageSize != null) and (!pageSize.equals(''))">
+		LIMIT #{startPos}, #{pageSize}
+		</if>
+	</select><!-- end 상담 목록 조회 -->
+	
+	<!-- 상담 목록 총 갯수 조회 -->
+	<select id="advListCnt" resultType="int">
+		/*kr.happyjob.study.adv.dao.AdviceDao.advListCnt*/
+		select count(*)
+		from tb_adv ad		      		      
+        <where>
+			<if test="(tut_id != null) and (!tut_id.equals(''))">
+		    	and ad.tut_id = #{tut_id}
+			</if>		
+        	<if test="(lec_id != null) and (!lec_id.equals(''))">
+		    	and ad.lec_id = #{lec_id}
+			</if>
+		</where>			
+	</select><!-- end 상담 목록 총 갯수 조회 -->
+	
+	<!-- 상담 상세보기 -->
+	<select id="advDetail" resultType="kr.happyjob.study.adv.model.AdviceVo">
+		/*kr.happyjob.study.adv.dao.AdviceDao.advDetail*/
+		select  ad.adv_id
+       		  , ad.lec_id
+       		  , li.lec_name as lec_name
+              , ad.std_id
+              , std.name as std_name
+              , ad.tut_id
+              , tut.name as tut_name
+              , ad.adv_place
+              , ad.adv_content
+              , ad.adv_date
+              , DATE_FORMAT(ad.mod_date, '%Y.%m.%d %H:%i') as mod_date
+		from  tb_adv ad
+			  join tb_userinfo std on ad.std_id = std.loginID
+			  join tb_userinfo tut on ad.tut_id = tut.loginID			  
+			  join tb_lec_info li on ad.lec_id = li.lec_id
+		<where>
+ 	    	<if test="(adv_id != null) and (!adv_id.equals(''))">
+		    	and ad.adv_id = #{adv_id}
+			</if>
+		</where>		
+	</select><!-- end 상담 상세보기 -->
+	
+	<!-- 강의 수강 학생 목록 조회 -->
+	<select id="lecStdList" resultType="kr.happyjob.study.adv.model.LecStdInfoVo">
+		/*kr.happyjob.study.adv.dao.AdviceDao.lecStdList*/
+		select  ls.lec_id
+              , ls.std_id
+              , u.name as std_name                  
+		from  tb_lecstd_info ls
+			inner join tb_userinfo u on ls.std_id=u.loginID
+        <where>
+	    	<if test="(lec_id != null) and (!lec_id.equals(''))">
+		    	and lec_id = #{lec_id}
+			</if>
+		</where>		
+	</select><!-- end 강의 수강 학생 목록 조회 -->
+	
+	<!-- 강의 수강 학생 목록 총 갯수 조회 -->
+	<select id="lecStdListCnt" resultType="int">
+		/*kr.happyjob.study.adv.dao.AdviceDao.lecStdListCnt*/
+		select count(*)
+		from tb_lecstd_info
+        <where>
+        	<if test="(lec_id != null) and (!lec_id.equals(''))">
+		    	and lec_id = #{lec_id}
+			</if>
+		</where>			
+	</select><!-- end 강의 수강 학생 목록 총 갯수 조회 -->
+	
+	<!-- 상담 등록 -->
+	<insert id="advRegister">	
+		insert into tb_adv 
+					(	lec_id		
+						, std_id		
+						, tut_id	
+						, adv_place	
+						, adv_content	
+						, adv_date
+						, mod_date	
+					) values (
+						#{lec_id}		
+						, #{std_id}
+						, #{tut_id}	
+						, #{adv_place}	
+						, #{adv_content}
+						, #{adv_date}
+						, now()
+					)
+	</insert><!-- end 상담 등록 -->
+
+	<!-- 상담 수정 -->	
+	<update id="advUpdate">
+		update tb_adv
+		   set adv_place = #{adv_place}
+		   	 , adv_content = #{adv_content}
+ 	 		 , adv_date = #{adv_date}
+ 	 		 , mod_date = now()
+		where adv_id = #{adv_id}
+	</update><!-- end 상담 수정 -->
+	
+	<!-- 상담 삭제 -->
+	<update id="advDelete">
+		delete from tb_adv where adv_id = #{adv_id}
+	</update><!-- end 상담 삭제 -->	
+	
+	<!-- 공지 삭제 -->
+	<delete id="noticedelete">
+		delete
+		from tb_adm_notice
+		where notice_id = #{notice_id}
+	</delete>
+	
+</mapper>

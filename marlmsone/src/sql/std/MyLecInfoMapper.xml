@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.std.dao.MyLecInfoDao">
+
+	<!-- 나의 수강목록 조회 -->
+	<select id="myLecList" resultType="kr.happyjob.study.std.model.MyLecInfoVo">
+		/*kr.happyjob.study.adv.dao.MyLecInfoDao.myLecList*/
+		select  lec.lec_id
+              , lec.lec_name
+       		  , tut.loginID as tut_id
+              , tut.name as tut_name
+              , lr.lecrm_name as lecrm_name
+              , ls.std_id as std_id
+              , DATE_FORMAT(lec.start_date, '%Y.%m.%d') as start_date
+              , DATE_FORMAT(lec.end_date, '%Y.%m.%d') as end_date
+              , ls.srvy_yn
+              , ls.apv_yn
+		from  tb_lecstd_info ls
+        	join tb_lec_info lec on lec.lec_id = ls.lec_id
+        	join tb_lec_room lr on lr.lecrm_id = lec.lecrm_id
+			join tb_userinfo tut on tut.loginID = lec.tutor_id
+		<where>
+ 	    	<if test="(loginID != null) and (!loginID.equals(''))">
+		    	and ls.std_id = #{loginID}
+			</if>
+			<if test="(searchKey != null) and (!searchKey.equals(''))">
+				<choose>
+					<when test="searchKey.equals('ProceedingLec')">
+						AND DATE_FORMAT(NOW(), '%Y.%m.%d') <![CDATA[>=]]>DATE_FORMAT( lec.start_date, '%Y.%m.%d')
+						AND DATE_FORMAT(NOW(), '%Y.%m.%d') <![CDATA[<=]]>DATE_FORMAT( lec.end_date, '%Y.%m.%d')
+					</when>
+					<when test="searchKey.equals('LastLec')">
+						AND  DATE_FORMAT(NOW(), '%Y.%m.%d') <![CDATA[>]]> DATE_FORMAT( lec.end_date, '%Y.%m.%d')
+					</when>
+				</choose>
+			</if>
+		</where>   
+		ORDER BY lec.start_date
+		<if test="(startPos != null) and (!startPos.equals('')) and (pageSize != null) and (!pageSize.equals(''))">
+		LIMIT #{startPos}, #{pageSize}
+		</if>   
+	</select><!-- end 나의 수강목록 조회 -->
+	
+	<!-- 나의 수강목록 총 갯수 조회 -->
+	<select id="myLecListCnt" resultType="int">
+		/*kr.happyjob.study.std.dao.MyLecInfoDao.myLecListCnt*/
+		select count(*)
+		from tb_lecstd_info ls
+			join tb_lec_info lec on ls.lec_id = lec.lec_id
+		<where>
+ 	    	<if test="(loginID != null) and (!loginID.equals(''))">
+		    	and ls.std_id = #{loginID} and ls.apv_yn = 'Y'
+			</if>
+			<if test="(searchKey != null) and (!searchKey.equals(''))">
+				<choose>
+					<when test="searchKey.equals('ProceedingLec')">
+						AND DATE_FORMAT(NOW(), '%Y.%m.%d') <![CDATA[>=]]>DATE_FORMAT( lec.start_date, '%Y.%m.%d')
+						AND DATE_FORMAT(NOW(), '%Y.%m.%d') <![CDATA[<=]]>DATE_FORMAT( lec.end_date, '%Y.%m.%d')
+					</when>
+					<when test="searchKey.equals('LastLec')">
+						AND  DATE_FORMAT(NOW(), '%Y.%m.%d') <![CDATA[>]]> DATE_FORMAT( lec.end_date, '%Y.%m.%d')
+					</when>
+				</choose>
+			</if>
+		</where>  	      		      
+	</select><!-- end 나의 수강목록 총 갯수 조회 -->
+	
+	<!-- 나의 수강목록 상세보기 -->
+	<select id="myLecDetail" resultType="kr.happyjob.study.std.model.MyLecInfoVo">
+		/*kr.happyjob.study.adv.dao.MyLecInfoDao.myLecDetail*/
+		select  lec.lec_id
+              , lec.lec_name
+              , lec.lec_type_id
+              , lt.lec_type_name
+              , lec.lecrm_id
+              , lr.lecrm_name
+       		  , tut.loginID as tut_id
+              , tut.name as tut_name
+       		  , lec.lec_goal
+       		  , wp.week
+       		  , wp.learn_goal
+       		  , wp.learn_con
+              , DATE_FORMAT(lec.start_date, '%Y.%m.%d') as start_date
+              , DATE_FORMAT(lec.end_date, '%Y.%m.%d') as end_date
+		from  tb_lec_info lec
+  			left join tb_lec_type lt on lt.lec_type_id = lec.lec_type_id 
+  			left join tb_lec_room lr on lr.lecrm_id = lec.lecrm_id 
+  			left join tb_week_plan wp on wp.lec_id = lec.lec_id 
+  			join tb_userinfo tut on tut.loginID = lec.tutor_id 	   	
+  		where lec.lec_id = #{lec_id}		
+	</select><!-- end 나의 수강목록 상세보기 -->
+	
+	<!-- 나의 수강목록 상세보기 총 갯수 조회 -->
+	<select id="myLecDetailCnt" resultType="int">
+		/*kr.happyjob.study.std.dao.MyLecInfoDao.myLecDetailCnt*/
+		select count(*)
+		from  tb_lec_info lec
+  			left join tb_lec_type lt on lt.lec_type_id = lec.lec_type_id 
+  			left join tb_lec_room lr on lr.lecrm_id = lec.lecrm_id 
+  			left join tb_week_plan wp on wp.lec_id = lec.lec_id 
+  			join tb_userinfo tut on tut.loginID = lec.tutor_id 	   	
+  		where lec.lec_id = #{lec_id}		
+	</select><!-- end 나의 수강목록 상세보기 총 갯수 조회 -->
+	
+	<!-- 설문조사 문항 조회 -->
+	<select id="surveyItemList" resultType="kr.happyjob.study.std.model.SurveyInfoVo">	      
+		select que_num
+		     , que
+		     , que_one
+		     , que_two
+		     , que_three
+		     , que_four	     		     
+   		     , que_five
+		from tb_srvy_que;             	
+	</select><!-- end 설문조사 문항 조회 -->
+	
+	<!-- 설문조사 문항 총 갯수 조회 -->
+	<select id="surveyItemListCnt" resultType="int">
+		/*kr.happyjob.study.std.dao.MyTestInfoDao.testItemListCnt*/
+		select count(*)
+		from tb_srvy_que;	      		      
+	</select><!-- end 설문조사 문항 총 갯수 조회 -->	
+	
+	<!--  설문조사 응답 등록 -->
+	<insert id="registerSurveyResponse">
+	/*kr.happyjob.study.std.dao.MyTestInfoDao.registerSurveyResponse*/	
+	<selectKey resultType="int" keyProperty="ans_num" order="BEFORE">
+    	select ifnull(max(ans_num),0) + 1 from tb_srvy_std
+    </selectKey> 
+		insert into tb_srvy_std
+					(	ans_num
+					  , que_num
+   					  , lec_id
+   		   			<if test="(review == null) or (!review.equals(''))">   		   			   					  
+ 					  , review_num
+ 					</if>
+ 					<if test="(review != null) and (!review.equals(''))">
+ 					  , review
+ 					</if>
+					) values (
+					  #{ans_num}
+					  , #{que_num}		
+					  , #{lec_id}
+   		   			<if test="(review == null) or (!review.equals(''))">					  
+					  , #{review_num}
+ 					</if>
+ 					<if test="(review != null) and (!review.equals(''))">
+					  , #{review}					  
+ 					</if>
+					)
+	</insert><!-- end 설문조사 응답 등록 -->
+	
+	<!-- 설문조사 유무 컬럼 업데이트 -->
+	<update id="updateLecStdInfoSrvyYn">	
+	update tb_lecstd_info
+		set srvy_yn = 'Y'
+	where lec_id = #{lec_id} and std_id = #{std_id}
+	</update><!-- end 설문조사 유무 컬럼 업데이트 -->
+	
+</mapper>

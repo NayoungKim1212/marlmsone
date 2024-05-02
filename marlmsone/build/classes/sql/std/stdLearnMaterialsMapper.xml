@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.std.dao.StdLearnMaterialsDao">
+
+<!-- 학습 자료 리스트 -->
+<select id="stdLearnMatList" parameterType="HashMap" resultType="kr.happyjob.study.std.model.StdLearningMaterialsModel">
+		SELECT
+			ld.learn_data_id,
+			li.lec_id,
+			li.lec_name,
+		    ld.learn_tit,
+		    ld.learn_con,
+		    ld.w_date,
+		    ld.learn_fname,
+		    ld.learn_url,
+            tl.std_id
+		FROM
+			tb_learn_data ld
+		INNER JOIN tb_lec_info li ON ld.lec_id = li.lec_id
+        JOIN tb_lecstd_info tl on li.lec_id = tl.lec_id   
+        <where>
+       		std_id =  #{loginId}
+			<if test="searchInfo != null and searchInfo != ''">
+				<choose>
+					<when test="searchKey eq 'lec_name'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+					</when>
+					<when test="searchKey eq 'title'.toString()">
+						and ld.learn_tit LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<when test="searchKey eq 'all'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+						or ld.learn_tit LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where> 
+        LIMIT #{pageIndex}, #{pageSize};
+</select>
+
+<!-- 학습 자료 카운트 -->
+<select id="learnMatTotalCount" resultType="int">
+	SELECT Count(*) as totalCount
+	FROM tb_learn_data ld
+	INNER JOIN tb_lec_info li ON ld.lec_id = li.lec_id
+	JOIN tb_lecstd_info tl on li.lec_id = tl.lec_id   
+	<where>
+       		std_id =  #{loginId} 
+    			<if test="searchInfo != null and searchInfo != ''">
+				<choose>
+					<when test="searchKey eq 'lec_name'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+					</when>
+					<when test="searchKey eq 'title'.toString()">
+						and ld.learn_tit LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<when test="searchKey eq 'all'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+						or ld.learn_tit LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where> 
+</select>
+
+<!-- 학습 자료 모달 -->
+<select id="std_detail" resultType="kr.happyjob.study.std.model.StdLearningMaterialsModel">
+        select
+        	learn_data_id,
+			learn_tit,
+            learn_con,
+            w_date,
+            learn_fname,
+            learn_url
+        from tb_learn_data
+        where learn_data_id = #{learn_data_id}   
+</select>
+</mapper>

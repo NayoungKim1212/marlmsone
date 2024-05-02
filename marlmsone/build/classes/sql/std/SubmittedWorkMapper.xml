@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.std.dao.SubmittedWorkDao">
+	
+	<!-- 내가 듣는 강의 중 과제가 있는 과제물만 출력 -->
+	<select id="submitList" resultType="kr.happyjob.study.std.model.SubmittedWorkVo">
+		SELECT li.lec_id as lec_id
+		      ,lei.lec_name as lec_name
+		      ,hmk.hwk_id as hwk_id
+		      ,hmk.hwk_name as hwk_name
+		      ,li.std_id as std_id
+		 FROM tb_lecstd_info li
+		       INNER JOIN tb_lec_info lei on lei.lec_id = li.lec_id
+		       LEFT OUTER JOIN tb_hmk hmk on hmk.lec_id = li.lec_id 
+		 where li.std_id=#{loginID}
+		   and li.apv_yn = 'y'
+		   and exists(  
+		                select 1
+		                  from tb_hmk bk
+		                 where bk.lec_id = li.lec_id
+		             )
+	</select>
+	
+	<!-- 총 게시글 -->
+	<select id="submitcnt" resultType="int">
+		/*kr.happyjob.study.notice.dao.NoticeDao.submitcnt*/
+		
+		SELECT COUNT(*)
+		 FROM tb_lecstd_info li
+		       INNER JOIN tb_lec_info lei on lei.lec_id = li.lec_id
+		       LEFT OUTER JOIN tb_hmk hmk on hmk.lec_id = li.lec_id 
+		 where li.std_id=#{loginID}
+		   and li.apv_yn = 'y'
+		   and exists(  
+		                select 1
+		                  from tb_hmk bk
+		                 where bk.lec_id = li.lec_id
+		             )
+	</select>	
+	
+	<select id="cnt" resultType="int">
+		SELECT COUNT(*)
+		FROM tb_hwk_submit
+		WHERE std_id=#{loginID}
+		AND hwk_id=#{hwk_id}
+	</select>
+	
+	
+	
+	<!-- 과제등록 -->
+	<insert id="submitSave">
+		/*kr.happyjob.study.notice.dao.NoticeDao.submitSave*/
+
+				insert into tb_hwk_submit 
+					(	
+						 std_id		
+						, hwk_id	
+						, submit_con	
+						, submit_fname		
+						,submit_url
+						,submit_fsize
+						,submit_date
+					) values (
+						 #{std_id}
+						, #{hwk_id}	
+						, #{submit_con}			
+						, #{fileinfo.file_nm}	
+						, #{fileinfo.file_loc}
+						, #{fileinfo.file_size}
+						,now()	
+					)
+		</insert>	
+
+	
+	<update id="submitModify">
+		UPDATE tb_hwk_submit
+		SET
+				submit_con =#{modify_con}	
+				,submit_fname = #{fileinfo.file_nm}	
+				,submit_url = #{fileinfo.file_loc}	
+				,submit_fsize = #{fileinfo.file_size}	
+				,submit_date = now()
+		WHERE submit_id=#{submit_id}; 	
+	</update>
+
+	<!-- 개별조회 (업로드 파일 가져오기) -->
+		<select id="getFile" resultType="kr.happyjob.study.std.model.SubmittedWorkVo">
+			SELECT*
+			FROM tb_hwk_submit
+			WHERE std_id=#{std_id}	
+			AND hwk_id= #{hwk_id}
+		</select>
+	
+</mapper>

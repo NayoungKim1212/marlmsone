@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.happyjob.study.tut.dao.LectureStudentInfoDao">
+		<!-- 강의 리스트  -->
+		<select id="getLectureList" parameterType="HashMap" resultType="kr.happyjob.study.tut.model.TutorLectureDto">
+		/*kr.happyjob.study.tut.dao.LectureStudentInfoDao.getLectureList*/
+		
+		SELECT 
+			li.lec_id,
+			li.lec_name,
+			li.tutor_id,
+			ui.name AS tutor_name,
+			li.lecrm_id,
+			lr.lecrm_name,
+			li.start_date,
+			li.end_date,
+			li.pre_pnum,
+			li.max_pnum
+		FROM
+			tb_lec_info li
+		INNER JOIN tb_userinfo ui ON li.tutor_id = ui.loginID
+		INNER JOIN tb_lec_room lr ON li.lecrm_id = lr.lecrm_id
+		<where>
+			tutor_id = #{tutorId}
+			<if test="(lectureValue != null) and (lectureValue != '')">
+				and li.lec_name Like CONCAT('%', #{lectureValue}, '%')
+			</if>
+		</where>
+		ORDER BY lec_id
+		LIMIT #{pageIndex}, #{pageSize};
+	
+	</select>
+	
+	<select id="getDetailTutorLecture" parameterType="HashMap" 
+	resultType="kr.happyjob.study.tut.model.TutorLectureDto">
+		SELECT 
+			li.lec_id,
+			li.lec_name,
+			li.tutor_id,
+			ui.name AS tutor_name,
+			li.lecrm_id,
+			lr.lecrm_name,
+			li.start_date,
+			li.end_date,
+			li.pre_pnum,
+			li.max_pnum,
+			li.process_day
+		FROM
+			tb_lec_info li
+		INNER JOIN tb_userinfo ui ON li.tutor_id = ui.loginID
+		INNER JOIN tb_lec_room lr ON li.lecrm_id = lr.lecrm_id
+		WHERE
+			tutor_id = #{tutorId} AND lec_id = #{lectureId}; 
+	</select>
+
+	<select id="lectureTotalCount" parameterType="HashMap" resultType="Integer">
+	/*kr.happyjob.study.tut.dao.LectureStudentInfoDao.lectureTotalCount*/
+		SELECT 
+   		 	count(*) AS count
+		FROM 
+			tb_lec_info li
+		INNER JOIN tb_userinfo ui ON li.tutor_id = ui.loginID
+		INNER JOIN tb_lec_room lr ON li.lecrm_id = lr.lecrm_id
+		<where>
+			tutor_id = #{tutorId}
+			<if test="(lectureValue != null) and (lectureValue != '')">
+				and li.lec_name Like CONCAT('%', #{lectureValue}, '%')
+			</if>
+		</where>
+	</select>
+	
+	<select id="getLectureStudentList" parameterType="HashMap" 
+	resultType="kr.happyjob.study.tut.model.LectureStudentDto">
+		SELECT 
+			li.lec_id,
+    		li.std_id,
+    		ui.std_num AS student_number,
+		    ui.name AS student_name,
+		    ui.tel AS student_tel,
+		    ui.sex AS student_sex,
+		    ui.mail AS student_mail,
+		    ui.addr AS student_addr,
+		    ui.join_date,
+		    li.srvy_yn AS survey_yn,
+		    li.apv_yn AS approve_yn
+		FROM 
+			tb_lecstd_info li
+		INNER JOIN tb_userinfo ui ON li.std_id = ui.loginID
+		<where>
+			lec_id = #{lectureValue}
+			<if test="(studentValue != null) and (!studentValue.equals(''))">
+				<choose>
+					<when test="searchKey eq 'studentName'.toString() ">
+						and ui.name LIKE CONCAT('%', #{studentValue}, '%')
+					</when>
+					<when test="searchKey eq 'studentId'.toString() ">
+						and li.std_id LIKE CONCAT('%', #{studentValue}, '%')
+					</when>
+					<when test="searchKey eq 'studentTel'.toString() ">
+						and ui.tel LIKE CONCAT('%', #{studentValue}, '%')
+					</when>
+				</choose>
+			</if>
+		</where>
+		LIMIT #{pageIndex}, #{pageSize};
+	</select>
+	
+	<select id="lectureStudentTotalCount" parameterType="HashMap" resultType="Integer">
+		SELECT 
+	    	count(*)
+		FROM 
+			tb_lecstd_info li
+		INNER JOIN tb_userinfo ui ON li.std_id = ui.loginID
+		<where>
+			lec_id = #{lectureValue}
+			<if test="(studentValue != null) and (!studentValue.equals(''))">
+				<choose>
+					<when test="searchKey eq 'studentName'.toString() ">
+						and ui.name LIKE CONCAT('%', #{studentValue}, '%')
+					</when>
+					<when test="searchKey eq 'studentId'.toString() ">
+						and li.std_id LIKE CONCAT('%', #{studentValue}, '%')
+					</when>
+					<when test="searchKey eq 'studentTel'.toString() ">
+						and ui.tel LIKE CONCAT('%', #{studentValue}, '%')
+					</when>
+				</choose>
+			</if>
+		</where>
+	
+	</select>
+	<select id="getDetailLectureStudent" parameterType="HashMap" 
+	resultType="kr.happyjob.study.tut.model.LectureStudentDto">
+		SELECT 
+			ls.lec_id,
+		    li.lec_name,
+		    li.tutor_id,
+		    ls.std_id,
+			ui.std_num AS student_number,
+		    ui.name AS student_name,
+		    ui.tel AS student_tel,
+		    ui.sex AS student_sex,
+		    ui.mail AS student_mail,
+		    ui.addr AS student_addr,
+		    ui.join_date,
+   			DATE_FORMAT(li.start_date, '%Y-%m-%d') AS startDate,
+    		DATE_FORMAT(li.end_date,'%Y-%m-%d') AS endDate,
+		    ls.srvy_yn AS survey_yn,
+		    ls.apv_yn AS approve_yn
+		FROM 
+			tb_lecstd_info ls
+		INNER JOIN tb_userinfo ui ON ls.std_id = ui.loginID
+		INNER JOIN tb_lec_info li ON ls.lec_id = li.lec_id
+		WHERE ls.std_id = #{studentId};
+	</select>
+	
+	<update id="approveLectureStudent" parameterType="HashMap">
+		UPDATE tb_lecstd_info
+			SET apv_yn = "Y"
+		WHERE 
+			lec_id = #{lectureId} AND std_id = #{studentId};
+			
+		UPDATE tb_lec_info
+			SET pre_pnum = pre_pnum + 1
+		WHERE lec_id = #{lectureId};
+	</update>
+	
+	<update id="cancleLectureStudent" parameterType="HashMap">
+		UPDATE tb_lecstd_info
+			SET apv_yn = "N"
+		WHERE 
+			lec_id = #{lectureId} AND std_id = #{studentId};
+			
+		UPDATE tb_lec_info
+			SET pre_pnum = pre_pnum - 1
+		WHERE lec_id = #{lectureId};
+	</update>
+	
+</mapper>

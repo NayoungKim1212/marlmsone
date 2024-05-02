@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.tut.dao.LecturePlanDao">
+
+	<!-- 강의 목록 조회 -->
+	<select id="tutorLecList" resultType="kr.happyjob.study.tut.model.LecturePlanModel">
+		SELECT
+			   i.lec_id,
+			   i.lec_name,
+			   DATE_FORMAT(i.start_date, '%Y.%m.%d') as start_date,
+			   DATE_FORMAT(i.end_date,'%Y.%m.%d') as end_date,
+			   i.pre_pnum,
+			   i.max_pnum,
+			   i.lec_sort,
+			   t.lec_type_id,
+			   t.lec_type_name
+	   	  FROM tb_lec_info i
+	 LEFT JOIN tb_lec_type t
+		    ON i.lec_type_id = t.lec_type_id
+		<where>
+			i.tutor_id=#{tutor_id}
+			<if test="(progress != null) and (progress eq 'ing'.toString())">
+				<![CDATA[ AND end_date > now() ]]>
+			</if>
+			<if test="(progress != null) and (progress eq 'end'.toString())">
+				<![CDATA[ AND now() > end_date ]]>
+			</if>
+			<if test="(searchWord != null) and (searchWord != '')">
+				AND i.lec_name Like CONCAT('%', #{searchWord}, '%')
+			</if>
+		</where>
+			ORDER BY start_date DESC
+		<if test="(pageIndex != null) and (!pageIndex.equals('')) and (pageSize != null) and (!pageSize.equals(''))">
+			LIMIT #{pageIndex}, #{pageSize}
+		</if>
+	</select>
+
+	<!-- 강의 수 조회 -->
+	<select id="countLecList" resultType="int">
+		SELECT count(*)
+		  FROM tb_lec_info
+		<where>
+			tutor_id=#{tutor_id}
+			<if test="(progress != null) and (progress eq 'ing'.toString())">
+				<![CDATA[ AND end_date > now() ]]>
+			</if>
+			<if test="(progress != null) and (progress eq 'end'.toString())">
+				<![CDATA[ AND now() > end_date ]]>
+			</if>
+			<if test="(searchWord != null) and (searchWord != '')">
+				AND lec_name Like CONCAT('%', #{searchWord}, '%')
+			</if>
+		</where>
+	</select>
+	
+	<!-- 강의 분류명 조회 -->
+	<select id="lecTypeList" resultType="kr.happyjob.study.tut.model.LecturePlanModel">
+		SELECT 
+			   lec_type_id, 
+			   lec_type_name 
+		  FROM tb_lec_type
+	  ORDER BY lec_type_name;
+	</select>
+	
+	<!--강의실 목록 조회 -->
+	<select id="room_name"  resultType="kr.happyjob.study.tut.model.LectureRoomModel">
+		SELECT 
+			   lecrm_id, 
+			   lecrm_name 
+		  FROM tb_lec_room 
+	  ORDER BY lecrm_name; 
+	</select>
+	
+	<!-- 개별 강의 정보 조회 -->
+	<select id="plan_one" resultType="kr.happyjob.study.tut.model.LecturePlanModel">
+		SELECT 
+			   lecrm_name,
+		       loginID,
+		       name, 
+		       tel, 
+		       mail,
+		       lec_id, 
+		       tutor_id, 
+		       lec_name,
+			   l.lecrm_id, 
+			   max_pnum,
+			   pre_pnum, 
+			   start_date, 
+			   end_date, 
+			   process_day,
+			   lec_goal,
+			   lec_sort,
+			   t.lec_type_name,
+			   t.lec_type_id
+		  FROM tb_lec_info l
+	 LEFT JOIN tb_userinfo u
+		    ON u.loginID = l.tutor_id
+	 LEFT JOIN tb_lec_room r
+		    ON l.lecrm_id= r.lecrm_id
+	 LEFT JOIN tb_lec_type t
+			ON l.lec_type_id = t.lec_type_id
+		 WHERE lec_id = #{lec_id}
+	</select>
+	
+	<!--주차별 강의 계획 조회 -->
+	<select id="week_list" resultType="kr.happyjob.study.tut.model.LecturePlanModel">
+		SELECT * 
+		  FROM tb_week_plan
+		 WHERE lec_id=#{lec_id}
+	</select>
+
+	<!--강의계획서 저장 -->
+	<update id="plan_register">
+		UPDATE tb_lec_info
+		   SET 
+		       tutor_id=#{tutor_id},
+			   lec_goal = #{lec_goal},
+			   lecrm_id=#{lecrm_id},
+		       lec_type_id = #{lec_type_id},
+			   lec_sort = #{lec_sort}
+		 WHERE lec_id=#{lec_id}
+	</update>
+
+	<!-- 주간계획서 저장 -->
+	<insert id="week_register">
+		INSERT INTO 
+				    tb_week_plan
+		            (
+		             lec_id, 
+		             week, 
+		             learn_con,
+					 learn_goal
+					 )
+		      VALUES 
+		      		 (
+		      		  #{lec_id}, 
+		      		  #{week}, 
+		      		  #{learn_con}, 
+		      		  #{learn_goal}
+		      		 );
+	</insert>
+	
+	<!--주간계획서 삭제 -->
+	<delete id="week_del">
+		DELETE 
+		  FROM tb_week_plan 
+		 WHERE lec_id = #{lec_id} 
+		   AND week = #{week}
+	</delete>
+	
+	<!--주간계획서 수정 -->
+	<update id="week_up">
+		UPDATE tb_week_plan
+		   SET 
+		   	   week = #{week}, 
+		   	   learn_con = #{learn_con}, 
+		   	   learn_goal = #{learn_goal}
+		 WHERE lec_id = #{lec_id} 
+		   AND week = #{week}
+	</update>
+
+	<!-- 주간계획서 갯수 조회 -->
+	<select id="chk_week" resultType="int">
+		SELECT count(lec_id)
+		  FROM tb_week_plan 
+		 WHERE lec_id = #{lec_id} 
+		   AND week = #{week};
+	</select>
+
+	<!-- 모달창 강의 목록 조회-->
+	<select id="mlec_list" resultType="kr.happyjob.study.tut.model.LecturePlanModel">
+	SELECT 
+		   lec_name,
+		   lec_id 
+	  FROM tb_lec_info l
+	 WHERE 
+	 	   NOT EXISTS 
+	 	   (
+	 	    SELECT lec_id 
+	 	      FROM tb_week_plan w 
+	 	     WHERE l.lec_id=w.lec_id
+	 	    )
+		AND l.tutor_id=#{tutor_id}
+	</select>
+
+</mapper>

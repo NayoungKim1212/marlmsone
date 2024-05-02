@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.register.dao.RegisterListDao">
+
+	<select id="lec_List" parameterType="HashMap"
+		resultType="kr.happyjob.study.register.model.RegisterListModel">
+		SELECT
+			li.lec_id,
+			li.tutor_id,
+			li.lecrm_id,
+			li.lec_name,
+			li.pre_pnum,
+			tu.name AS t_name,
+			lr.lecrm_name,
+			DATE_FORMAT(li.start_date, '%Y-%m-%d')
+			as start_date,
+			DATE_FORMAT(li.end_date, '%Y-%m-%d') as end_date
+		FROM
+			tb_lec_info li
+		INNER JOIN tb_userinfo tu ON li.tutor_id = tu.loginID
+		LEFT JOIN tb_lec_room lr On li.lecrm_id = lr.lecrm_id
+		<where>
+			<if test="searchInfo != null and searchInfo != ''">
+				<choose>
+					<when test="searchKey eq 'lec_name'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+					</when>
+					<when test="searchKey eq 't_name'.toString()">
+						and tu.name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<when test="searchKey eq 'all'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+						or tu.name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		LIMIT #{startpos}, #{pageSize}
+	</select>
+
+	<select id="lec_Total" resultType="int">
+		SELECT
+		COUNT(*) AS lec_Total
+		FROM
+		tb_lec_info AS li
+		INNER JOIN
+		tb_userinfo
+		AS tu ON li.tutor_id =
+		tu.loginID
+		<where>
+			<if test="searchInfo != null and searchInfo != ''">
+				<choose>
+					<when test="searchKey eq 'lec_name'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+					</when>
+					<when test="searchKey eq 't_name'.toString()">
+						and tu.name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<when test="searchKey eq 'all'.toString()">
+						and li.lec_name Like CONCAT('%', #{searchInfo},
+						'%')
+						or tu.name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+	</select>
+
+	<!-- 학생 목록 조회 -->
+	<select id="stdList" parameterType="HashMap"
+		resultType="kr.happyjob.study.register.model.RegisterListModel">
+		select ti.lec_id
+		, ti.tutor_id
+		, ti.lec_name
+		, tl.std_id
+		,
+		tu.name
+		, tu.std_num
+		from tb_lec_info ti
+		join tb_lecstd_info tl on
+		ti.lec_id =
+		tl.lec_id
+		join tb_userinfo tu on tl.std_id = tu.loginID
+		where tl.lec_id
+		= #{lec_id}
+		LIMIT #{startpos}, #{pageSize}
+	</select>
+
+	<!-- 학생 카운트 -->
+	<select id="std_Total" resultType="int">
+		SELECT
+		Count(*) as std_Total
+		from tb_lecstd_info tl
+		where tl.lec_id = ${lec_id}
+	</select>
+
+	<!-- 강의 등록하기 -->
+	<insert id="insertregisterList">
+		INSERT into tb_lec_info (
+			lec_name,
+			max_pnum,
+			tutor_id,
+			lecrm_id,
+			lec_type_id,
+			process_day,
+			start_date,
+			end_date
+		)
+		values (
+			#{lec_name},
+			#{max_pnum},
+			#{tutor_id},
+			#{lecrm_id},
+			#{lec_type_id},
+			#{process_day},
+			#{start_date},
+			#{end_date}
+		)
+	</insert>
+
+	<!-- 강의실 정보 가져오기 -->
+	<select id="lecrmList" parameterType="HashMap"
+		resultType="kr.happyjob.study.register.model.RegisterListModel">
+		SELECT
+		lecrm_id,
+		lecrm_name
+		FROM tb_lec_room
+	</select>
+
+	<!-- 강사 이름 가져오기 -->
+	<select id="tutList" parameterType="HashMap"
+		resultType="kr.happyjob.study.register.model.RegisterListModel">
+        SELECT DISTINCT
+			tu.name as t_name,
+			ti.tutor_id,
+			tu.loginID
+		FROM
+			tb_userinfo tu
+		LEFT JOIN
+			tb_lec_info ti ON tu.loginID = ti.tutor_id
+            where tu.user_type = 'B'
+	</select>
+	
+	<!-- 강의 분류 정보 가져오기 -->
+	<select id="lecTypeList" resultType="kr.happyjob.study.register.model.RegisterListModel">
+		SELECT lec_type_id, lec_type_name from tb_lec_type
+		ORDER BY lec_type_name;
+	</select>
+	
+		<!-- 모달창 강의 목록 -->
+	<select id="lec_info" resultType="kr.happyjob.study.register.model.RegisterListModel">
+		SELECT 
+			tl.lec_id,
+		    tl.lec_name,		    
+		    tl.lec_type_id,
+		    tl.max_pnum,
+		    tl.tutor_id,
+            tu.name as t_name,
+		    tl.lecrm_id,
+            lr.lecrm_name,
+		    tl.process_day,
+		    DATE_FORMAT(tl.start_date, '%Y-%m-%d') as start_date,
+		    DATE_FORMAT(tl.end_date, '%Y-%m-%d') as end_date        
+		FROM tb_lec_info tl
+		JOIN tb_userinfo AS tu ON tl.tutor_id = tu.loginID
+        LEFT JOIN tb_lec_room lr On tl.lecrm_id = lr.lecrm_id 
+		WHERE tl.lec_id = #{lec_id}
+	</select>
+	
+	<!-- 강의 수정 -->	
+	<update id="updatelec">
+		UPDATE tb_lec_info li
+		SET 
+	        li.lec_id = #{lec_id},
+	        li.lec_name = #{lec_name},
+	        li.lec_type_id = #{lec_type_id},
+	        li.max_pnum = #{max_pnum},
+	        li.tutor_id = #{tutor_id},
+	        li.lecrm_id = #{lecrm_id},
+	        li.process_day = #{process_day},
+	       	li.start_date = STR_TO_DATE(#{start_date}, '%Y-%m-%d'),
+			li.end_date = STR_TO_DATE(#{end_date}, '%Y-%m-%d')
+        WHERE
+			li.lec_id = #{lec_id}
+	</update>
+	
+		<!-- 강의 정보 삭제 -->
+<delete id="deletelec">
+    DELETE FROM tb_lec_info
+    WHERE lec_id = #{lec_id}
+</delete>
+</mapper>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.happyjob.study.std.dao.LectureDao">
+
+	<!-- 강의 목록 조회 -->
+	<select id="lecList" parameterType="HashMap"
+		resultType="kr.happyjob.study.std.model.LectureModel">
+		SELECT 
+			tl.lec_id,
+          	tl.tutor_id,
+          	tu.name,
+          	tl.lec_name,
+          	tl.lec_sort,
+          	tl.max_pnum,
+          	tl.pre_pnum,
+          	DATE_FORMAT(tl.start_date, '%Y-%m-%d') as start_date,
+          	DATE_FORMAT(tl.end_date, '%Y-%m-%d') as end_date
+        From tb_lec_info  tl
+        JOIN tb_userinfo tu on tu.loginID = tl.tutor_id
+        LEFT JOIN tb_lecstd_info ti on tl.lec_id = ti.lec_id
+        <where>
+        	DATE_FORMAT(tl.end_date, '%Y-%m-%d') > now()
+        	AND NOT EXISTS (SELECT lec_id FROM tb_lecstd_info ti where tl.lec_id = ti.lec_id ) 
+			<if test="searchInfo != null and searchInfo != ''">
+				<choose>
+					<when test="searchKey eq 'name'.toString()">
+						and tu.name Like CONCAT('%', #{searchInfo},
+						'%')
+					</when>
+					<when test="searchKey eq 'lec_name'.toString()">
+						and tl.lec_name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<when test="searchKey eq 'all'.toString()">
+						and tu.name Like CONCAT('%', #{searchInfo},
+						'%')
+						or tl.lec_name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		LIMIT #{startpos}, #{pageSize}		
+	</select>
+	
+	<!-- 강의 목록 조회 카운트 -->
+	<select id="lecTotal" resultType="int">
+		SELECT
+		COUNT(*) AS lecTotal
+		FROM tb_lec_info AS tl
+		JOIN tb_userinfo tu ON tl.tutor_id = tu.loginID
+        LEFT JOIN tb_lecstd_info ti on tl.lec_id = ti.lec_id
+        <where>
+        	DATE_FORMAT(tl.end_date, '%Y-%m-%d') > now()
+        	AND NOT EXISTS (SELECT lec_id FROM tb_lecstd_info ti where tl.lec_id = ti.lec_id ) 
+			<if test="searchInfo != null and searchInfo != ''">
+				<choose>
+					<when test="searchKey eq 'name'.toString()">
+						and tu.name Like CONCAT('%', #{searchInfo},
+						'%')
+					</when>
+					<when test="searchKey eq 'lec_name'.toString()">
+						and tl.lec_name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<when test="searchKey eq 'all'.toString()">
+						and tu.name Like CONCAT('%', #{searchInfo},
+						'%')
+						or tl.lec_name LIKE CONCAT('%', #{searchInfo}, '%')
+					</when>
+					<otherwise>
+						AND 1=2
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+	</select>
+	
+	<select id="lecInfo" resultType="kr.happyjob.study.std.model.LectureModel">
+		SELECT
+			tl.lec_id,
+	  		tl.lec_name,
+	      	tl.lec_sort,
+	  		tl.tutor_id,
+	      	tu.name,
+	      	tu.tel,
+	      	tu.mail,
+	      	tr.lecrm_id,
+	      	tr.lecrm_name,
+	  		tl.lec_goal
+		FROM tb_lec_info tl
+		left join tb_userinfo tu ON tu.loginID = tl.tutor_id
+		left join tb_lec_room tr ON tr.lecrm_id= tl.lecrm_id
+		where lec_id=#{lec_id}
+	</select>
+	
+		<!--주차 목록 조회 -->
+	<select id="week_plan" resultType="kr.happyjob.study.std.model.LectureModel">
+		select * from tb_week_plan
+		where lec_id=#{lec_id}
+	</select>
+	
+	<!-- 수강 신청 -->
+	<insert id="lecReg">
+           insert into tb_lecstd_info
+			(
+				lec_id,
+                std_id,
+                srvy_yn,
+                apv_yn,
+                test_yn
+			)
+           values (
+				#{lec_id},
+                #{std_id},
+                'N',
+                'N',
+                'N'
+           )
+	</insert>
+
+</mapper>
